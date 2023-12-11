@@ -15,7 +15,7 @@ sales_data <- read_csv("Data/umsatzdaten_gekuerzt.csv")
 
 weather_data <- read_csv("Data/wetter.csv")
 kiwo_days <- read_csv("Data/kiwo.csv")
-holidays <- read_csv("Data/feiertage.csv")
+holidays <- read_csv("Data/Feiertage.csv")
 schulferien <- read_csv("Data/Schulferien_2.csv")
 holstein_kiel <- read_csv("Data/HolsteinKiel.csv")
 verkaufsoffener_sonntag <- read_csv("Data/VerkaufsoffenerSonntag.csv")
