@@ -21,6 +21,9 @@ holstein_kiel <- read_csv("Data/HolsteinKiel.csv")
 verkaufsoffener_sonntag <- read_csv("Data/VerkaufsoffenerSonntag.csv")
 thw_kiel <- read_csv("Data/THWKiel.csv")
 
+# turn dates into weekdays
+sales_data$Weekday <- weekdays(sales_data$Datum)
+
 # filter for Ferien only in schulferien and mutate them to digit 1
 holidays <- holidays %>%
   mutate(Feiertag = ifelse(Feiertag == "0", 0, 1)) %>%
