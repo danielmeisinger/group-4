@@ -9,10 +9,6 @@ library(lubridate)
 
 # import csv files
 sales_data <- read_csv("Data/umsatzdaten_gekuerzt.csv")
-
-# turn dates into weekdays
-# sales_data$Weekday <- weekdays(sales_data$Datum)
-
 weather_data <- read_csv("Data/wetter.csv")
 kiwo_days <- read_csv("Data/kiwo.csv")
 holidays <- read_csv("Data/Feiertage.csv")
@@ -20,6 +16,7 @@ schulferien <- read_csv("Data/Schulferien_2.csv")
 holstein_kiel <- read_csv("Data/HolsteinKiel.csv")
 verkaufsoffener_sonntag <- read_csv("Data/VerkaufsoffenerSonntag.csv")
 thw_kiel <- read_csv("Data/THWKiel.csv")
+test_ids <- read_csv("Data/test_ids.csv")
 
 # turn dates into weekdays
 weather_data$Weekday <- weekdays(weather_data$Datum)
@@ -75,6 +72,10 @@ combined_data <- full_join(weather_data, sales_data, join_by(Datum)) %>%
   full_join(thw_kiel, join_by(Datum)) %>%
   full_join(schulferien, join_by(Datum)) %>%
   full_join(verkaufsoffener_sonntag, join_by(Datum))
+
+
+# combined_data <- merge(combined_data, test_ids, by = c("Datum", "Warengruppe"), all = TRUE)
+
 
 # make all entries na equal to 0
 combined_data$Feiertag[is.na(combined_data$Feiertag)] <- 0
