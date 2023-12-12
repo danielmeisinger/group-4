@@ -22,7 +22,7 @@ verkaufsoffener_sonntag <- read_csv("Data/VerkaufsoffenerSonntag.csv")
 thw_kiel <- read_csv("Data/THWKiel.csv")
 
 # turn dates into weekdays
-sales_data$Weekday <- weekdays(sales_data$Datum)
+weather_data$Weekday <- weekdays(weather_data$Datum)
 
 # filter for Ferien only in schulferien and mutate them to digit 1
 holidays <- holidays %>%
@@ -68,13 +68,13 @@ verkaufsoffener_sonntag <- verkaufsoffener_sonntag %>%
 verkaufsoffener_sonntag$flohmarkt <- 1
 
 # create a tibble with the sales data, weather data and kiwo days
-combined_data <- left_join(weather_data, sales_data, join_by(Datum)) %>%
-  left_join(holidays, join_by(Datum)) %>%
-  left_join(kiwo_days, join_by(Datum)) %>%
-  left_join(holstein_kiel, join_by(Datum)) %>%
-  left_join(thw_kiel, join_by(Datum)) %>%
-  left_join(schulferien, join_by(Datum)) %>%
-  left_join(verkaufsoffener_sonntag, join_by(Datum))
+combined_data <- full_join(weather_data, sales_data, join_by(Datum)) %>%
+  full_join(holidays, join_by(Datum)) %>%
+  full_join(kiwo_days, join_by(Datum)) %>%
+  full_join(holstein_kiel, join_by(Datum)) %>%
+  full_join(thw_kiel, join_by(Datum)) %>%
+  full_join(schulferien, join_by(Datum)) %>%
+  full_join(verkaufsoffener_sonntag, join_by(Datum))
 
 # make all entries na equal to 0
 combined_data$Feiertag[is.na(combined_data$Feiertag)] <- 0
@@ -86,7 +86,7 @@ combined_data$flohmarkt[is.na(combined_data$flohmarkt)] <- 0
 
 # filter out data without sales data and no feiertag
 filtered_data <- combined_data %>%
-  filter(!is.na(Umsatz) & Feiertag != 1)
+  filter(!is.na(Umsatz) & Feiertag == 0 | !is.na(Umsatz) & Feiertag == 1 | is.na(Umsatz) & Feiertag == 0)
 
 # show only unique entries
 filtered_data <- distinct(filtered_data)
