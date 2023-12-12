@@ -10,7 +10,7 @@ umsatz_prediction_validation_data <- filtered_data %>%
   filter(Datum >= "2017-08-01" & Datum <= "2018-07-13")
 
 # Set up a linear model for the training dataset
-lm_umsatz_prediction_training_data <- lm(Umsatz ~ Bewoelkung + Temperatur + Windgeschwindigkeit + Wettercode + Warengruppe + as.factor(KielerWoche) + as.factor(holstein_spiel) + as.factor(thw_spiel) + as.factor(Ferien) + as.factor(flohmarkt), data = umsatz_prediction_training_data)
+lm_umsatz_prediction_training_data <- lm(Umsatz ~ Bewoelkung + Temperatur + Windgeschwindigkeit + Wettercode + Weekday + Warengruppe + as.factor(KielerWoche) + as.factor(holstein_spiel) + as.factor(thw_spiel) + as.factor(Ferien) + as.factor(flohmarkt), data = umsatz_prediction_training_data)
 
 # regression diagnostics
 summary(lm_umsatz_prediction_training_data)
