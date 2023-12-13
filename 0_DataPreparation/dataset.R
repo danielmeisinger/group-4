@@ -21,6 +21,44 @@ test_ids <- read_csv("Data/test_ids.csv")
 # turn dates into weekdays
 weather_data$Weekday <- weekdays(weather_data$Datum)
 
+# Define the boundaries for the temperature categories
+temperature_boundaries <- c(-Inf, -8, 4, 15, 21, 28, Inf)
+
+# Define the labels for the categories
+temperature_labels <- c("Very Low", "Low", "Medium", "High", "Very High", "Hot")
+
+# Create a new column 'temperature_category' with the assigned categories
+weather_data$temperature_category <- cut(weather_data$Temperatur,
+                               breaks = temperature_boundaries,
+                               labels = temperature_labels,
+                               include.lowest = TRUE)
+
+# Define the boundaries for the temperature categories
+wind_boundaries <- c(-Inf, 28, Inf)
+
+# Define the labels for the categories
+wind_labels <- c("Normal", "Windy")
+
+# Create a new column 'temperature_category' with the assigned categories
+weather_data$wind_category <- cut(weather_data$Windgeschwindigkeit,
+                                         breaks = wind_boundaries,
+                                         labels = wind_labels,
+                                         include.lowest = TRUE)
+
+weather_data$Wettercode[is.na(weather_data$Wettercode)] <- 0
+
+# Define the boundaries for the temperature categories
+weather_boundaries <- c(-Inf,0, 99)
+
+# Define the labels for the categories
+weather_labels <- c("Gutes Wetter", "Schlechtes Wetter")
+
+# Create a new column 'temperature_category' with the assigned categories
+weather_data$weather_category <- cut(weather_data$Wettercode,
+                                  breaks = weather_boundaries,
+                                  labels = weather_labels,
+                                  include.lowest = TRUE)
+
 # filter for Ferien only in schulferien and mutate them to digit 1
 holidays <- holidays %>%
   mutate(Feiertag = ifelse(Feiertag == "0", 0, 1)) %>%
@@ -73,8 +111,9 @@ combined_data <- full_join(weather_data, sales_data, join_by(Datum)) %>%
   full_join(schulferien, join_by(Datum)) %>%
   full_join(verkaufsoffener_sonntag, join_by(Datum))
 
-
+# merge the test ids with the combined data
 # combined_data <- merge(combined_data, test_ids, by = c("Datum", "Warengruppe"), all = TRUE)
+
 
 
 # make all entries na equal to 0

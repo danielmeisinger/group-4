@@ -1,5 +1,10 @@
 # Need to execute dataset.R from 0_DataPreparation
 # to get variable 'filtered_data'
+
+library(caret)
+library(mice)
+library(glmnet)
+
 source("0_DataPreparation/dataset.R")
 
 # Divide the dataset into a prediction dataset and a validation dataset
@@ -9,9 +14,16 @@ umsatz_prediction_training_data <- filtered_data %>%
 umsatz_prediction_validation_data <- filtered_data %>%
   filter(Datum >= "2017-08-01" & Datum <= "2018-07-13")
 
+
 # Set up a linear model for the training dataset
-lm_umsatz_prediction_training_data <- lm(Umsatz ~ Bewoelkung + Temperatur + Windgeschwindigkeit + Wettercode + Weekday + Warengruppe + as.factor(KielerWoche) + as.factor(holstein_spiel) + as.factor(thw_spiel) + as.factor(Ferien) + as.factor(flohmarkt), data = umsatz_prediction_training_data)
+lm_umsatz_prediction_training_data <- lm(Umsatz ~ Weekday + Temperatur + Wettercode + as.factor(temperature_category) * as.factor(wind_category) * as.factor(Warengruppe) * as.factor(KielerWoche) * as.factor(Ferien) + as.factor(holstein_spiel) * as.factor(thw_spiel) + as.factor(flohmarkt), data = umsatz_prediction_training_data)
 
 # regression diagnostics
 summary(lm_umsatz_prediction_training_data)
-plot(lm_umsatz_prediction_training_data)
+
+# plot(lm_umsatz_prediction_training_data)
+
+# calculate the values for the Umsatz using the validation dataset and compare with the real values
+umsatz_prediction_validation_data$Umsatz_prediction <- predict(lm_umsatz_prediction_training_data, umsatz_prediction_validation_data)
+mse <- mean((umsatz_prediction_validation_data$Umsatz - umsatz_prediction_validation_data$Umsatz_prediction)^2, na.rm = TRUE)
+print(mse)
