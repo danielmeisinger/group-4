@@ -1,4 +1,4 @@
-# Load libraries
+# Laden aller verwendeten libraries
 library(dplyr)
 library(readr)
 library(ggplot2)
@@ -7,126 +7,170 @@ library(skimr)
 library(DataExplorer)
 library(lubridate)
 
-# import csv files
-sales_data <- read_csv("Data/umsatzdaten_gekuerzt.csv")
-weather_data <- read_csv("Data/wetter.csv")
-kiwo_days <- read_csv("Data/kiwo.csv")
-holidays <- read_csv("Data/Feiertage.csv")
-schulferien <- read_csv("Data/Schulferien_2.csv")
-holstein_kiel <- read_csv("Data/HolsteinKiel.csv")
-verkaufsoffener_sonntag <- read_csv("Data/VerkaufsoffenerSonntag.csv")
-thw_kiel <- read_csv("Data/THWKiel.csv")
+# Importieren aller .csv Dateien im Ordner Data
+verkaufs_daten <- read_csv("Data/umsatzdaten_gekuerzt.csv")
+wetter_daten <- read_csv("Data/wetter.csv")
+kiwo_tage <- read_csv("Data/kiwo.csv")
+feiertage <- read_csv("Data/feiertage.csv")
+schulferien <- read_csv("Data/schulferien.csv")
+holstein_kiel <- read_csv("Data/holstein_kiel.csv")
+verkaufsoffener_sonntag <- read_csv("Data/verkaufsoffener_sonntag.csv")
+thw_kiel <- read_csv("Data/thw_kiel.csv")
 test_ids <- read_csv("Data/test_ids.csv")
 
-# turn dates into weekdays
-weather_data$Weekday <- weekdays(weather_data$Datum)
+# Hinzufügen von Wochentagen abhängig von dem Datum im Datensatz wetter_daten
+wetter_daten$Weekday <- weekdays(wetter_daten$Datum)
 
-# Define the boundaries for the temperature categories
-temperature_boundaries <- c(-Inf, -8, 4, 15, 21, 28, Inf)
+# Hinzufügen von Werten für die Jahreszeit abhängig von dem Datum
+wetter_daten <- wetter_daten %>%
+  mutate(jahreszeit = case_when(
+  between(month(Datum), 3, 4) ~ "Frühling",
+  between(month(Datum), 5, 6) ~ "Sommer",
+  between(month(Datum), 7, 8) ~ "Hochsommer",
+  between(month(Datum), 9, 11) ~ "Herbst"
+  ))
 
-# Define the labels for the categories
-temperature_labels <- c("Very Low", "Low", "Medium", "High", "Very High", "Hot")
+# wetter_daten <- wetter_daten %>%
+#   mutate(monat = month(Datum))
 
-# Create a new column 'temperature_category' with the assigned categories
-weather_data$temperature_category <- cut(weather_data$Temperatur,
-                               breaks = temperature_boundaries,
-                               labels = temperature_labels,
+# Definition von Temperaturgrenzen, um die Temperatur in Kategorien einzuteilen
+temperatur_grenzen <- c(-Inf, -8, 4, 15, 21, 28, Inf)
+
+# Definition von Bezeichnungen für die Temperaturkategorien
+temperatur_bezeichnung <- c("sehr_niedrig", "niedrig", "gemäßigt", "hoch", "sehr_hoch","heiß")
+
+# Hinzufügen einer neuen Spalte 'temperatur_kategorie' anhand der definierten Grenzen und Bezeichnungen
+wetter_daten$temperatur_kategorie <- cut(wetter_daten$Temperatur,
+                               breaks = temperatur_grenzen,
+                               labels = temperatur_bezeichnung,
                                include.lowest = TRUE)
 
-# Define the boundaries for the temperature categories
-wind_boundaries <- c(-Inf, 28, Inf)
+# Definition von Windgeschwindigkeitsgrenzen, um die Windgeschwindigkeit in Kategorien einzuteilen
+wind_grenzen <- c(-Inf, 20, 28, Inf)
 
 # Define the labels for the categories
-wind_labels <- c("Normal", "Windy")
+wind_bezeichnung <- c("kein_wind","normal", "windig")
 
-# Create a new column 'temperature_category' with the assigned categories
-weather_data$wind_category <- cut(weather_data$Windgeschwindigkeit,
-                                         breaks = wind_boundaries,
-                                         labels = wind_labels,
+# Hinzufügen einer neuen Spalte 'wind_kategorie' anhand der definierten Grenzen und Bezeichnungen
+wetter_daten$wind_kategorie <- cut(wetter_daten$Windgeschwindigkeit,
+                                         breaks = wind_grenzen,
+                                         labels = wind_bezeichnung,
                                          include.lowest = TRUE)
 
-weather_data$Wettercode[is.na(weather_data$Wettercode)] <- 0
+# Setzen aller NA Werte für die Spalte 'Wettercodes' auf 0
+wetter_daten$Wettercode[is.na(wetter_daten$Wettercode)] <- 0
 
-# Define the boundaries for the temperature categories
-weather_boundaries <- c(-Inf,0, 99)
+# Definition von Wettercodesgrenzen, um die Wettercodes in Kategorien einzuteilen
+wetter_grenzen <- c(-Inf,0, 99)
 
-# Define the labels for the categories
-weather_labels <- c("Gutes Wetter", "Schlechtes Wetter")
+# Definition von Bezeichnungen für die Wettercodeskategorien
+wetter_bezeichnung <- c("Gutes Wetter", "Schlechtes Wetter")
 
-# Create a new column 'temperature_category' with the assigned categories
-weather_data$weather_category <- cut(weather_data$Wettercode,
-                                  breaks = weather_boundaries,
-                                  labels = weather_labels,
+# Hinzufügen einer neuen Spalte 'wetter_kategorie' anhand der definierten Grenzen und Bezeichnungen
+wetter_daten$wetter_kategorie <- cut(wetter_daten$Wettercode,
+                                  breaks = wetter_grenzen,
+                                  labels = wetter_bezeichnung,
                                   include.lowest = TRUE)
 
-# filter for Ferien only in schulferien and mutate them to digit 1
-holidays <- holidays %>%
-  mutate(Feiertag = ifelse(Feiertag == "0", 0, 1)) %>%
-  filter(Feiertag == 1)
+# Ändern des Spaltennamens Feiertag zu feiertag
+colnames(feiertage)[colnames(feiertage) == "Feiertag"] <- "feiertag"
 
-# filter for Ferien only in schulferien and mutate them to digit 1
+# Ändern des Wertes in der Spalte 'feiertag' für alle Feiertage auf 1
+feiertage <- feiertage %>%
+  mutate(feiertag = 1)
+
+# Ändern des Spaltennamens Ferien zu ferien
+colnames(schulferien)[colnames(schulferien) == "Ferien"] <- "ferien"
+
+# Ändern des Wertes für keine Ferien auf 0
 schulferien <- schulferien %>%
-  mutate(Ferien = ifelse(Ferien == "Keine Ferien", 0, 1)) %>%
-  filter(Ferien == 1)
+  mutate(ferien = ifelse(ferien == "Keine Ferien", 0, 1)) %>%
+  filter(ferien != 0)
 
-# change colname to Heimspiel
+
+# Ändern des Spaltennamens von Spiel zu holstein_spiel
 colnames(holstein_kiel)[colnames(holstein_kiel) == "Spiel"] <- "holstein_spiel"
 
-# filter for heimspiele only in holstein_kiel and mutate them to digit 1
+# Setzen aller Heimspiele in der Spalte 'holstein_spiel' auf 1
 holstein_kiel <- holstein_kiel %>%
-  filter(holstein_spiel == "Heimspiel") %>%
-  mutate(holstein_spiel = ifelse(holstein_spiel == "Heimspiel", 1, holstein_spiel))
+  mutate(holstein_spiel = ifelse(holstein_spiel == "Heimspiel", 1, 0)) %>%
+  filter(holstein_spiel == 1)
 
-# turn Datum into dates to change the format
+# Ändern des Datentyps im Datensatz thw_kiel für die Spalte 'Datum' als Datum
 thw_kiel$Datum <- dmy(thw_kiel$Datum)
 
-# Reformat the date column to "yyyy-mm-dd" to match other datasets
+# Reformatieren der Datumsspalte im Datensatz thw_kiel zu YYYY-MM-DD, wie in den anderen Datensätzen
 thw_kiel$Datum <- format(thw_kiel$Datum, "%Y-%m-%d")
 thw_kiel$Datum <- as.Date(thw_kiel$Datum, format = "%Y-%m-%d")
 
-# change colname to Heimspiel
+# Ändern des Spaltennamens von Handballspiel zu thw_spiel
 colnames(thw_kiel)[colnames(thw_kiel) == "Handballspiel"] <- "thw_spiel"
 
-# filter for heimspiele only in thw_kiel and mutate them to digit 1
+# Setzen aller Heimspiele in der Spalte thw_spiel auf 1
 thw_kiel <- thw_kiel %>%
-  filter(thw_spiel == "Heimspiel") %>%
-  mutate(thw_spiel = ifelse(thw_spiel == "Heimspiel", 1, thw_spiel))
+  mutate(thw_spiel = ifelse(thw_spiel == "Heimspiel", 1, 0)) %>%
+  filter(thw_spiel == 1)
 
-# change colname to Heimspiel
+# Ändern des Spaltennamens von Flohmarkt/Verkaufsoffener Sonntag zu flohmarkt
 colnames(verkaufsoffener_sonntag)[colnames(verkaufsoffener_sonntag) == "Flohmarkt/Verkaufsoffener Sonntag"] <- "flohmarkt"
 
-# filter for verkaufsoffene sonntage only in verkaufsoffener_sonntag and mutate them to digit 1
+# Filtern nach allen verkaufsoffenen Sonntagen und Zuweisung des Wertes 1 in der Spalte 'flohmarkt'
 verkaufsoffener_sonntag <- verkaufsoffener_sonntag %>%
-  filter(flohmarkt == "offen")
+  filter(flohmarkt == "offen") %>%
+  mutate(flohmarkt = 1)
 
-# make all entries in verkaufsoffener_sonntag in the column flohmarkt to 1
-verkaufsoffener_sonntag$flohmarkt <- 1
+arbeitslosenquote <- data.frame(
+  jahr = c(2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019),
+  arbeitslosenquote = c(10.1, 10.2, 10.1, 9.9, 9.7, 9.1, 8.2, 7.6)
+)
 
-# create a tibble with the sales data, weather data and kiwo days
-combined_data <- full_join(weather_data, sales_data, join_by(Datum)) %>%
-  full_join(holidays, join_by(Datum)) %>%
-  full_join(kiwo_days, join_by(Datum)) %>%
+einwohnerzahl <- data.frame(
+  jahr = c(2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019),
+  einwohnerzahl = c(239.866, 241.533, 243.488, 246.306, 247.441, 247.943, 247.548, 246.947)
+)
+
+# Definition von Wettercodesgrenzen, um die Wettercodes in Kategorien einzuteilen
+alzahl_grenzen <- c(-Inf, 9.1, 10.2)
+
+# Definition von Bezeichnungen für die Wettercodeskategorien
+alzahl_bezeichnung <- c("Niedrig", "Hoch")
+
+# Hinzufügen einer neuen Spalte 'wetter_kategorie' anhand der definierten Grenzen und Bezeichnungen
+arbeitslosenquote$arbeitslosenquote_kategorie <- cut(arbeitslosenquote$arbeitslosenquote,
+                                     breaks = alzahl_grenzen,
+                                     labels = alzahl_bezeichnung,
+                                     include.lowest = TRUE)
+
+
+# Erstellung eines tibbles mit allen Datensätzen aufgrundlage der gemeinsamen Spalte 'Datum'
+gesamte_daten <- full_join(wetter_daten, verkaufs_daten, join_by(Datum)) %>%
+  full_join(feiertage, join_by(Datum)) %>%
+  full_join(kiwo_tage, join_by(Datum)) %>%
   full_join(holstein_kiel, join_by(Datum)) %>%
   full_join(thw_kiel, join_by(Datum)) %>%
-  full_join(schulferien, join_by(Datum)) %>%
+  full_join(schulferien, join_by(Datum), relationship = "many-to-many") %>%
   full_join(verkaufsoffener_sonntag, join_by(Datum))
 
+gesamte_daten <- gesamte_daten %>%
+  mutate(jahr = year(Datum)) %>%
+  full_join(arbeitslosenquote, join_by(jahr)) %>%
+  full_join(einwohnerzahl, join_by(jahr))
+
 # merge the test ids with the combined data
-# combined_data <- merge(combined_data, test_ids, by = c("Datum", "Warengruppe"), all = TRUE)
+# gesamte_daten <- merge(gesamte_daten, test_ids, by = c("Datum", "Warengruppe"), all = TRUE)
 
+# Setzen aller NA Werte auf 0
+gesamte_daten$feiertag[is.na(gesamte_daten$feiertag)] <- 0
+gesamte_daten$KielerWoche[is.na(gesamte_daten$KielerWoche)] <- 0
+gesamte_daten$holstein_spiel[is.na(gesamte_daten$holstein_spiel)] <- 0
+gesamte_daten$thw_spiel[is.na(gesamte_daten$thw_spiel)] <- 0
+gesamte_daten$ferien[is.na(gesamte_daten$ferien)] <- 0
+gesamte_daten$flohmarkt[is.na(gesamte_daten$flohmarkt)] <- 0
+gesamte_daten$Umsatz[is.na(gesamte_daten$Umsatz)] <- 0
 
+# Herausfiltern aller Werte ohne Umsatzdaten, bspw. wenn geschlossen wegen Feiertagen oder wegen fehlenden Daten im Jahr 2012 und 2019
+gefilterte_daten <- gesamte_daten %>%
+  filter(Umsatz == 0 & feiertag == 1 | Umsatz > 0 & feiertag == 0 | Umsatz > 0 & feiertag == 1)
 
-# make all entries na equal to 0
-combined_data$Feiertag[is.na(combined_data$Feiertag)] <- 0
-combined_data$KielerWoche[is.na(combined_data$KielerWoche)] <- 0
-combined_data$holstein_spiel[is.na(combined_data$holstein_spiel)] <- 0
-combined_data$thw_spiel[is.na(combined_data$thw_spiel)] <- 0
-combined_data$Ferien[is.na(combined_data$Ferien)] <- 0
-combined_data$flohmarkt[is.na(combined_data$flohmarkt)] <- 0
-
-# filter out data without sales data and no feiertag
-filtered_data <- combined_data %>%
-  filter(!is.na(Umsatz) & Feiertag == 0 | !is.na(Umsatz) & Feiertag == 1 | is.na(Umsatz) & Feiertag == 0)
-
-# show only unique entries
-filtered_data <- distinct(filtered_data)
+# Filtern nach einzigartigen Werten
+gefilterte_daten <- distinct(gefilterte_daten)

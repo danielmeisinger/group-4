@@ -8,11 +8,11 @@ The purpose of this stage is to establish a baseline model for your project. A b
 
 Implement linear regression model and provide information on the following issues:
 
-- **Feature Selection**
+-   **Feature Selection**
 
-- **Implementation**
+-   **Implementation**
 
-- **Evaluation**
+-   **Evaluation**
 
 ## Task
 
