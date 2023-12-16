@@ -23,7 +23,7 @@ inflation <- read_csv("Data/inflation.csv")
 verkaufs_preise <- read_csv("Data/retail_prices.csv")
 income <- read_csv("Data/income.csv")
 ausgaben <- read_csv("Data/ausgaben.csv")
-
+kreuzfahrtschiffe <- read_csv("Data/kreuzfahrtschiffe.csv")
 
 # variable_to_impute <- "Temperatur"
 #
@@ -128,6 +128,13 @@ thw_kiel <- thw_kiel %>%
   mutate(thw_spiel = ifelse(thw_spiel == "Heimspiel", 1, 0)) %>%
   filter(thw_spiel == 1)
 
+kreuzfahrtschiffe$Date <- dmy(kreuzfahrtschiffe$Date)
+
+# Ändern des Spaltennamens von Date zu Datum
+colnames(kreuzfahrtschiffe)[colnames(kreuzfahrtschiffe) == "Date"] <- "Datum"
+
+kreuzfahrtschiffe$Datum <- as.Date(kreuzfahrtschiffe$Datum, format = "%Y-%m-%d")
+
 # Ändern des Spaltennamens von Flohmarkt/Verkaufsoffener Sonntag zu flohmarkt
 colnames(verkaufsoffener_sonntag)[colnames(verkaufsoffener_sonntag) == "Flohmarkt/Verkaufsoffener Sonntag"] <- "flohmarkt"
 
@@ -197,6 +204,10 @@ wm_spiele$Datum <- as.Date(wm_spiele$Datum, format = "%Y-%m-%d")
 gesamte_daten <- full_join(wetter_daten, verkaufs_daten, by = c("Datum"))
 
 gesamte_daten <- gesamte_daten %>%
+  mutate(jahr = year(Datum)) %>%
+  mutate(quartal = quarter(Datum)) %>%
+  mutate(monat = month.name[month(Datum)]) %>%
+  full_join(verkaufs_preise, join_by(jahr, monat)) %>%
   full_join(feiertage, join_by(Datum)) %>%
   full_join(kiwo_tage, join_by(Datum)) %>%
   full_join(holstein_kiel, join_by(Datum)) %>%
@@ -207,14 +218,10 @@ gesamte_daten <- gesamte_daten %>%
   full_join(vor_sylvester, join_by(Datum)) %>%
   full_join(tage_vor_ostern, join_by(Datum)) %>%
   full_join(ostersamstag, join_by(Datum)) %>%
-  full_join(wm_spiele, join_by(Datum))
-
-gesamte_daten <- gesamte_daten %>%
-  mutate(jahr = year(Datum)) %>%
-  mutate(quartal = quarter(Datum)) %>%
+  full_join(wm_spiele, join_by(Datum)) %>%
+  full_join(kreuzfahrtschiffe, join_by(Datum))%>%
   full_join(arbeitslosenquote, join_by(jahr)) %>%
   full_join(einwohnerzahl, join_by(jahr)) %>%
-  full_join(verkaufs_preise, join_by(jahr, monat)) %>%
   full_join(inflation, join_by(jahr, monat)) %>%
   full_join(income, join_by(jahr, quartal)) %>%
   full_join(ausgaben, join_by(jahr))
@@ -234,7 +241,7 @@ gesamte_daten$vor_sylvester[is.na(gesamte_daten$vor_sylvester)] <- 0
 gesamte_daten$tage_vor_ostern[is.na(gesamte_daten$tage_vor_ostern)] <- 0
 gesamte_daten$ostersamstag[is.na(gesamte_daten$ostersamstag)] <- 0
 gesamte_daten$wm_spiele[is.na(gesamte_daten$wm_spiele)] <- 0
-
+gesamte_daten$Count[is.na(gesamte_daten$Count)] <- 0
 
 # column_to_clean <- "Temperatur"
 
@@ -269,3 +276,28 @@ gefilterte_daten <- gefilterte_daten %>%
   filter(!is.na(Datum)) %>%
   filter(Datum < as.Date("2019-08-02")) %>%
   mutate(across(c("Bewoelkung", "Temperatur", "Windgeschwindigkeit", "Wettercode"), zoo::na.approx, na.rm = FALSE))
+
+# Hinzufügen einer neuen Spalte 'temperatur_kategorie' anhand der definierten Grenzen und Bezeichnungen
+gefilterte_daten$temperatur_kategorie <- cut(gefilterte_daten$Temperatur,
+                                         breaks = temperatur_grenzen,
+                                         labels = temperatur_bezeichnung,
+                                         include.lowest = TRUE)
+
+# Hinzufügen einer neuen Spalte 'wind_kategorie' anhand der definierten Grenzen und Bezeichnungen
+gefilterte_daten$wind_kategorie <- cut(gefilterte_daten$Windgeschwindigkeit,
+                                   breaks = wind_grenzen,
+                                   labels = wind_bezeichnung,
+                                   include.lowest = TRUE)
+
+# Setzen aller NA Werte für die Spalte 'Wettercodes' auf 0
+gefilterte_daten$Wettercode[is.na(wetter_daten$Wettercode)] <- 0
+
+# Hinzufügen einer neuen Spalte 'wetter_kategorie' anhand der definierten Grenzen und Bezeichnungen
+gefilterte_daten$wetter_kategorie <- cut(gefilterte_daten$Wettercode,
+                                     breaks = wetter_grenzen,
+                                     labels = wetter_bezeichnung,
+                                     include.lowest = TRUE)
+
+
+
+
