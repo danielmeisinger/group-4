@@ -21,6 +21,8 @@ thw_kiel <- read_csv("Data/thw_kiel.csv")
 test_ids <- read_csv("Data/test_ids.csv")
 inflation <- read_csv("Data/inflation.csv")
 verkaufs_preise <- read_csv("Data/retail_prices.csv")
+income <- read_csv("Data/income.csv")
+ausgaben <- read_csv("Data/ausgaben.csv")
 
 # Hinzufügen von Wochentagen abhängig von dem Datum im Datensatz wetter_daten
 wetter_daten$wochentag <- weekdays(wetter_daten$Datum)
@@ -44,7 +46,8 @@ wetter_daten <- wetter_daten %>%
   ))
 
 wetter_daten <- wetter_daten %>%
-  mutate(monat = month.name[month(Datum)])
+  mutate(monat = month.name[month(Datum)]) %>%
+  mutate(quartal = quarter(Datum))
 
 # Definition von Temperaturgrenzen, um die Temperatur in Kategorien einzuteilen
 temperatur_grenzen <- c(-Inf, -8, 4, 15, 21, 28, Inf)
@@ -189,7 +192,9 @@ gesamte_daten <- gesamte_daten %>%
   full_join(arbeitslosenquote, join_by(jahr)) %>%
   full_join(einwohnerzahl, join_by(jahr)) %>%
   full_join(verkaufs_preise, join_by(jahr, monat)) %>%
-  full_join(inflation, join_by(jahr, monat))
+  full_join(inflation, join_by(jahr, monat)) %>%
+  full_join(income, join_by(jahr, quartal)) %>%
+  full_join(ausgaben, join_by(jahr))
 
 # Setzen aller NA Werte auf 0
 gesamte_daten$feiertag[is.na(gesamte_daten$feiertag)] <- 0
