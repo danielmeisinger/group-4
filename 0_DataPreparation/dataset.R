@@ -24,8 +24,6 @@ verkaufs_preise <- read_csv("Data/retail_prices.csv")
 income <- read_csv("Data/income.csv")
 ausgaben <- read_csv("Data/ausgaben.csv")
 
-# Hinzufügen von Wochentagen abhängig von dem Datum im Datensatz wetter_daten
-wetter_daten$wochentag <- weekdays(wetter_daten$Datum)
 
 # variable_to_impute <- "Temperatur"
 #
@@ -148,6 +146,11 @@ einwohnerzahl <- data.frame(
   einwohnerzahl = c(239.866, 241.533, 243.488, 246.306, 247.441, 247.943, 247.548, 246.947)
 )
 
+wm_spiele <- data.frame(
+  Datum = c("2014-06-16", "2014-06-21", "2014-06-26", "2014-06-30", "2014-07-04","2014-07-08", "2014-07-13", "2016-06-12", "2016-06-16", "2016-06-21", "2016-07-02", "2016-07-07", "2018-06-17", "2018-06-23", "2018-06-27"),
+  wm_spiele = c(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1)
+)
+
 # Definition von Wettercodesgrenzen, um die Wettercodes in Kategorien einzuteilen
 alzahl_grenzen <- c(-Inf, 9.1, 10.2)
 
@@ -165,14 +168,30 @@ sylvester <- data.frame(
   sylvester = c(1,1,1,1,1,1,1,1)
 )
 
+vor_sylvester <- data.frame(
+  Datum = c("2012-12-30", "2013-12-30", "2014-12-30", "2015-12-30", "2016-12-30", "2017-12-30", "2018-12-30", "2019-12-30"),
+  vor_sylvester = c(1,1,1,1,1,1,1,1)
+)
+
 tage_vor_ostern <- data.frame(
-  Datum = c("2012-04-05", "2013-03-28", "2014-04-15", "2014-04-16","2014-04-17", "2015-03-30", "2015-04-01", "2015-04-02", "2016-03-22", "2016-03-23", "2016-03-24", "2017-04-11", "2017-04-12", "2017-04-13", "2018-03-27", "2018-03-28", "2018-03-29", "2019-04-16", "2019-04-17", "2019-04-18"),
-  tage_vor_ostern = c(1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1)
+  Datum = c("2012-04-05", "2013-03-28", "2014-04-15", "2014-04-16", "2014-04-17", "2014-04-19", "2015-03-30", "2015-04-01", "2015-04-02", "2015-04-04", "2016-03-22", "2016-03-23", "2016-03-24", "2016-03-26", "2017-04-11", "2017-04-12", "2017-04-13", "2017-04-15", "2018-03-27", "2018-03-28", "2018-03-29", "2018-03-31", "2019-04-16", "2019-04-17", "2019-04-18", "2019-04-20"),
+  tage_vor_ostern = c(1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1)
+)
+
+ostersamstag <- data.frame(
+  Datum = c("2014-04-19", "2015-04-04", "2016-03-26", "2017-04-15", "2018-03-31", "2019-04-20"),
+  ostersamstag = c(1,1,1,1,1,1)
 )
 
 sylvester$Datum <- as.Date(sylvester$Datum, format = "%Y-%m-%d")
 
+vor_sylvester$Datum <- as.Date(vor_sylvester$Datum, format = "%Y-%m-%d")
+
 tage_vor_ostern$Datum <- as.Date(tage_vor_ostern$Datum, format = "%Y-%m-%d")
+
+ostersamstag$Datum <- as.Date(ostersamstag$Datum, format = "%Y-%m-%d")
+
+wm_spiele$Datum <- as.Date(wm_spiele$Datum, format = "%Y-%m-%d")
 
 # Erstellung eines tibbles mit allen Datensätzen aufgrundlage der gemeinsamen Spalte 'Datum'
 gesamte_daten <- full_join(wetter_daten, verkaufs_daten, by = c("Datum"))
@@ -185,10 +204,14 @@ gesamte_daten <- gesamte_daten %>%
   full_join(schulferien, join_by(Datum), relationship = "many-to-many") %>%
   full_join(verkaufsoffener_sonntag, join_by(Datum)) %>%
   full_join(sylvester, join_by(Datum)) %>%
-  full_join(tage_vor_ostern, join_by(Datum))
+  full_join(vor_sylvester, join_by(Datum)) %>%
+  full_join(tage_vor_ostern, join_by(Datum)) %>%
+  full_join(ostersamstag, join_by(Datum)) %>%
+  full_join(wm_spiele, join_by(Datum))
 
 gesamte_daten <- gesamte_daten %>%
   mutate(jahr = year(Datum)) %>%
+  mutate(quartal = quarter(Datum)) %>%
   full_join(arbeitslosenquote, join_by(jahr)) %>%
   full_join(einwohnerzahl, join_by(jahr)) %>%
   full_join(verkaufs_preise, join_by(jahr, monat)) %>%
@@ -207,7 +230,11 @@ gesamte_daten$Umsatz[is.na(gesamte_daten$Umsatz)] <- 0
 gesamte_daten$jahreszeit[is.na(gesamte_daten$jahreszeit)] <- 0
 gesamte_daten$Bewoelkung[is.na(gesamte_daten$Bewoelkung)] <- 0
 gesamte_daten$sylvester[is.na(gesamte_daten$sylvester)] <- 0
+gesamte_daten$vor_sylvester[is.na(gesamte_daten$vor_sylvester)] <- 0
 gesamte_daten$tage_vor_ostern[is.na(gesamte_daten$tage_vor_ostern)] <- 0
+gesamte_daten$ostersamstag[is.na(gesamte_daten$ostersamstag)] <- 0
+gesamte_daten$wm_spiele[is.na(gesamte_daten$wm_spiele)] <- 0
+
 
 # column_to_clean <- "Temperatur"
 
@@ -219,4 +246,26 @@ gesamte_daten$tage_vor_ostern[is.na(gesamte_daten$tage_vor_ostern)] <- 0
 #   filter(Umsatz == 0 & feiertag == 1 | Umsatz > 0 & feiertag == 0 | Umsatz > 0 & feiertag == 1)
 
 # Filtern nach einzigartigen Werten
+
+# Hinzufügen von Wochentagen abhängig von dem Datum im Datensatz wetter_daten
+gesamte_daten$wochentag <- weekdays(gesamte_daten$Datum)
+
+gesamte_daten <- gesamte_daten %>%
+  mutate(monat = month.name[month(Datum)]) %>%
+  mutate(quartal = quarter(Datum))
+
 gefilterte_daten <- distinct(gesamte_daten)
+
+gefilterte_daten <- gefilterte_daten %>%
+  mutate(monatsabschnitt = case_when(
+    day(Datum) %in% 1:7 ~ "End",
+    day(Datum) %in% 8:22 ~ "Mid",
+    day(Datum) %in% 23:31 ~ "End"
+  ))
+
+
+gefilterte_daten <- gefilterte_daten %>%
+  arrange(Datum) %>%
+  filter(!is.na(Datum)) %>%
+  filter(Datum < as.Date("2019-08-02")) %>%
+  mutate(across(c("Bewoelkung", "Temperatur", "Windgeschwindigkeit", "Wettercode"), zoo::na.approx, na.rm = FALSE))

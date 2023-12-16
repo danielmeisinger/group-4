@@ -16,8 +16,13 @@ umsatz_prediction_test_data <- gefilterte_daten %>%
 # Set up a linear model for the training dataset
 # lm_umsatz_prediction_training_data <- lm(Umsatz ~ as.factor(wochentag) + Temperatur * Wettercode + Bewoelkung + as.factor(temperatur_kategorie) * as.factor(wind_kategorie) * as.factor(Warengruppe) * as.logical(KielerWoche)  * as.logical(feiertag) * as.logical(ferien) + as.factor(jahreszeit) * wochentag + as.logical(holstein_spiel) * as.logical(thw_spiel) * as.logical(flohmarkt) * as.factor(temperatur_kategorie) + as.factor(jahreszeit) + as.factor(arbeitslosenquote_kategorie) + as.factor(monat) + as.logical(sylvester) * as.factor(Warengruppe) + as.logical(tage_vor_ostern) * as.factor(Warengruppe), data = umsatz_prediction_training_data)
 
-lm_umsatz_prediction_training_data <- lm(Umsatz ~ as.factor(wochentag) * as.factor(Warengruppe) + as.logical(ferien) * as.factor(Warengruppe) * index_month + as.factor(Warengruppe) * as.logical(KielerWoche) + as.logical(sylvester) * as.factor(Warengruppe) * index_month + as.factor(monat) * as.factor(Warengruppe) + Temperatur * Wettercode * as.factor(Warengruppe) + Bewoelkung + as.factor(wetter_kategorie) * as.factor(Warengruppe) + as.logical(tage_vor_ostern) * as.factor(Warengruppe) + as.logical(holstein_spiel) * as.factor(Warengruppe) + as.factor(arbeitslosenquote_kategorie) * index_year_month + log(retail1) * I(index_year_month) * as.factor(Warengruppe), data = umsatz_prediction_training_data)
+weights <- ifelse(umsatz_prediction_training_data$sylvester == TRUE, 25,
+                  ifelse(umsatz_prediction_training_data$vor_sylvester == TRUE, 4,
+                         ifelse(umsatz_prediction_training_data$KielerWoche == TRUE, 4,
+                                ifelse(umsatz_prediction_training_data$tage_vor_ostern == TRUE, 1,1
+                                       ))))
 
+lm_umsatz_prediction_training_data <- lm(Umsatz ~ as.factor(wochentag) * as.factor(Warengruppe) + as.logical(ferien) * as.factor(Warengruppe) * index_month + as.factor(Warengruppe) * as.logical(KielerWoche) + as.logical(sylvester) * as.factor(Warengruppe) * index_month + as.logical(vor_sylvester) * as.factor(Warengruppe) * index_month + as.factor(monat) * as.factor(Warengruppe) + Temperatur * Wettercode * as.factor(Warengruppe) + Bewoelkung + as.factor(wetter_kategorie) * as.factor(Warengruppe) + as.logical(tage_vor_ostern) * as.factor(Warengruppe) + as.logical(holstein_spiel) * as.factor(Warengruppe) + as.factor(arbeitslosenquote_kategorie) * index_year_month + log(retail1) * I(index_year_month) * as.factor(Warengruppe) + as.factor(monatsabschnitt) * as.factor(Warengruppe) * index_month, data = umsatz_prediction_training_data, weights = weights)
 
 # regression diagnostics
 summary(lm_umsatz_prediction_training_data)
@@ -46,3 +51,9 @@ kaggle_submission <- umsatz_prediction_test_data %>%
   rename(Umsatz = umsatz_prediction)
 
 kaggle_submission <-  kaggle_submission[complete.cases(kaggle_submission$id), ]
+
+kaggle_submission <- kaggle_submission %>%
+  mutate_all(~ifelse(. < 0, 0.1, .)) %>%
+  mutate(Umsatz = coalesce(Umsatz, 0))
+
+write.csv(kaggle_submission, "kaggle_submission.csv", row.names = FALSE)
