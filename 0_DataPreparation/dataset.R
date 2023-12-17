@@ -25,14 +25,6 @@ income <- read_csv("Data/income.csv")
 ausgaben <- read_csv("Data/ausgaben.csv")
 kreuzfahrtschiffe <- read_csv("Data/kreuzfahrtschiffe.csv")
 
-# variable_to_impute <- "Temperatur"
-#
-# impute_missing_linear <- function(x) {
-#   zoo::na.approx(x)
-# }
-#
-# gesamte_daten <- gesamte_daten %>%
-#   mutate(across(all_of(column_to_impute), impute_missing_linear))
 
 # Hinzufügen von Werten für die Jahreszeit abhängig von dem Datum
 wetter_daten <- wetter_daten %>%
@@ -148,6 +140,10 @@ arbeitslosenquote <- data.frame(
   arbeitslosenquote = c(10.1, 10.2, 10.1, 9.9, 9.7, 9.1, 8.2, 7.6)
 )
 
+# Definition von Wettercodesgrenzen, um die Wettercodes in Kategorien einzuteilen
+alzahl_grenzen <- c(-Inf, 9.1, 10.2)
+alzahl_bezeichnung <- c("Niedrig", "Hoch")
+
 einwohnerzahl <- data.frame(
   jahr = c(2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019),
   einwohnerzahl = c(239.866, 241.533, 243.488, 246.306, 247.441, 247.943, 247.548, 246.947)
@@ -158,47 +154,42 @@ wm_spiele <- data.frame(
   wm_spiele = c(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1)
 )
 
-# Definition von Wettercodesgrenzen, um die Wettercodes in Kategorien einzuteilen
-alzahl_grenzen <- c(-Inf, 9.1, 10.2)
+wm_spiele$Datum <- as.Date(wm_spiele$Datum, format = "%Y-%m-%d")
 
-# Definition von Bezeichnungen für die Wettercodeskategorien
-alzahl_bezeichnung <- c("Niedrig", "Hoch")
+windjammerparade <- data.frame(
+  Datum = c("2012-06-23", "2013-06-29", "2014-06-28", "2015-06-27", "2016-06-25", "2017-06-24", "2018-06-23", "2019-06-29"),
+  windjammerparade = c(1, 1, 1, 1, 1, 1, 1, 1)
+)
 
-# Hinzufügen einer neuen Spalte 'wetter_kategorie' anhand der definierten Grenzen und Bezeichnungen
-arbeitslosenquote$arbeitslosenquote_kategorie <- cut(arbeitslosenquote$arbeitslosenquote,
-                                     breaks = alzahl_grenzen,
-                                     labels = alzahl_bezeichnung,
-                                     include.lowest = TRUE)
+windjammerparade$Datum <- as.Date(windjammerparade$Datum, format = "%Y-%m-%d")
 
 sylvester <- data.frame(
   Datum = c("2012-12-31", "2013-12-31", "2014-12-31", "2015-12-31", "2016-12-31", "2017-12-31", "2018-12-31", "2019-12-31"),
   sylvester = c(1,1,1,1,1,1,1,1)
 )
 
+sylvester$Datum <- as.Date(sylvester$Datum, format = "%Y-%m-%d")
+
 vor_sylvester <- data.frame(
   Datum = c("2012-12-30", "2013-12-30", "2014-12-30", "2015-12-30", "2016-12-30", "2017-12-30", "2018-12-30", "2019-12-30"),
   vor_sylvester = c(1,1,1,1,1,1,1,1)
 )
+
+vor_sylvester$Datum <- as.Date(vor_sylvester$Datum, format = "%Y-%m-%d")
 
 tage_vor_ostern <- data.frame(
   Datum = c("2012-04-05", "2013-03-28", "2014-04-15", "2014-04-16", "2014-04-17", "2014-04-19", "2015-03-30", "2015-04-01", "2015-04-02", "2015-04-04", "2016-03-22", "2016-03-23", "2016-03-24", "2016-03-26", "2017-04-11", "2017-04-12", "2017-04-13", "2017-04-15", "2018-03-27", "2018-03-28", "2018-03-29", "2018-03-31", "2019-04-16", "2019-04-17", "2019-04-18", "2019-04-20"),
   tage_vor_ostern = c(1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1)
 )
 
+tage_vor_ostern$Datum <- as.Date(tage_vor_ostern$Datum, format = "%Y-%m-%d")
+
 ostersamstag <- data.frame(
   Datum = c("2014-04-19", "2015-04-04", "2016-03-26", "2017-04-15", "2018-03-31", "2019-04-20"),
   ostersamstag = c(1,1,1,1,1,1)
 )
 
-sylvester$Datum <- as.Date(sylvester$Datum, format = "%Y-%m-%d")
-
-vor_sylvester$Datum <- as.Date(vor_sylvester$Datum, format = "%Y-%m-%d")
-
-tage_vor_ostern$Datum <- as.Date(tage_vor_ostern$Datum, format = "%Y-%m-%d")
-
 ostersamstag$Datum <- as.Date(ostersamstag$Datum, format = "%Y-%m-%d")
-
-wm_spiele$Datum <- as.Date(wm_spiele$Datum, format = "%Y-%m-%d")
 
 # Erstellung eines tibbles mit allen Datensätzen aufgrundlage der gemeinsamen Spalte 'Datum'
 gesamte_daten <- full_join(wetter_daten, verkaufs_daten, by = c("Datum"))
@@ -224,7 +215,8 @@ gesamte_daten <- gesamte_daten %>%
   full_join(einwohnerzahl, join_by(jahr)) %>%
   full_join(inflation, join_by(jahr, monat)) %>%
   full_join(income, join_by(jahr, quartal)) %>%
-  full_join(ausgaben, join_by(jahr))
+  full_join(ausgaben, join_by(jahr)) %>%
+  full_join(windjammerparade, join_by(Datum))
 
 # Setzen aller NA Werte auf 0
 gesamte_daten$feiertag[is.na(gesamte_daten$feiertag)] <- 0
@@ -242,11 +234,7 @@ gesamte_daten$tage_vor_ostern[is.na(gesamte_daten$tage_vor_ostern)] <- 0
 gesamte_daten$ostersamstag[is.na(gesamte_daten$ostersamstag)] <- 0
 gesamte_daten$wm_spiele[is.na(gesamte_daten$wm_spiele)] <- 0
 gesamte_daten$Count[is.na(gesamte_daten$Count)] <- 0
-
-# column_to_clean <- "Temperatur"
-
-# Remove rows with missing values in the specified column
-# gesamte_daten <- gesamte_daten[complete.cases(gesamte_daten[, column_to_clean]), ]
+gesamte_daten$windjammerparade[is.na(gesamte_daten$windjammerparade)] <- 0
 
 # Herausfiltern aller Werte ohne Umsatzdaten, bspw. wenn geschlossen wegen Feiertagen oder wegen fehlenden Daten im Jahr 2012 und 2019
 # gefilterte_daten <- gesamte_daten %>%
@@ -297,6 +285,12 @@ gefilterte_daten$wetter_kategorie <- cut(gefilterte_daten$Wettercode,
                                      breaks = wetter_grenzen,
                                      labels = wetter_bezeichnung,
                                      include.lowest = TRUE)
+
+# Hinzufügen einer neuen Spalte 'wetter_kategorie' anhand der definierten Grenzen und Bezeichnungen
+gefilterte_daten$arbeitslosenquote_kategorie <- cut(gefilterte_daten$arbeitslosenquote,
+                                                     breaks = alzahl_grenzen,
+                                                     labels = alzahl_bezeichnung,
+                                                     include.lowest = TRUE)
 
 
 
