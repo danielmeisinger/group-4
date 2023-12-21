@@ -1,16 +1,52 @@
-# Laden aller verwendeten libraries
-library(dplyr)
-library(readr)
-library(ggplot2)
-library(styler)
-library(skimr)
-library(DataExplorer)
-library(lubridate)
-library(tidyverse)
-library(zoo)
-library(imputeTS)
+###################################################
+### Preparation of the Environment ####
 
-# Importieren aller .csv Dateien im Ordner Data
+# Clear environment
+remove(list = ls())
+
+# Create list with needed libraries
+pkgs <- c("readr", "dplyr", "ggplot2", "styler", "skimr", "DataExplorer", "lubridate", "tidyverse", "zoo", "imputeTS")
+
+# Load each listed library and check if it is installed and install if necessary
+for (pkg in pkgs) {
+  if (!require(pkg, character.only = TRUE)) {
+    install.packages(pkg)
+    library(pkg, character.only = TRUE)
+  }
+}
+
+
+###################################################
+### Functions ####
+set_na_to_zero <- function(data, columns) {
+  for (col in columns) {
+    data[[col]][is.na(data[[col]])] <- 0
+  }
+  return(data)
+}
+
+###################################################
+### Data Import ####
+
+# # Directory containing CSV files
+# directory_path <- "Data/"
+#
+# # List all CSV files in the directory
+# csv_files <- list.files(directory_path, pattern = "\\.csv$", full.names = TRUE)
+#
+# # Use a for loop to load each file and create variables
+# for (file in csv_files) {
+#   # Extract the file name without the path and extension
+#   file_name <- tools::file_path_sans_ext(basename(file))
+#
+#   # Load the data into a data frame
+#   data <- read_csv(file)
+#
+#   # Assign the data frame to a variable with the same name as the file
+#   assign(file_name, data)
+# }
+
+# Reading the data files
 verkaufs_daten <- read_csv("Data/umsatzdaten_gekuerzt.csv")
 wetter_daten <- read_csv("Data/wetter.csv")
 kiwo_tage <- read_csv("Data/kiwo.csv")
@@ -26,7 +62,7 @@ income <- read_csv("Data/income.csv")
 ausgaben <- read_csv("Data/ausgaben.csv")
 kreuzfahrtschiffe <- read_csv("Data/kreuzfahrtschiffe.csv")
 
-
+###################################################
 # Hinzufügen von Werten für die Jahreszeit abhängig von dem Datum
 wetter_daten <- wetter_daten %>%
   mutate(jahreszeit = case_when(
@@ -216,24 +252,35 @@ gesamte_daten <- gesamte_daten %>%
   full_join(schulferien, join_by(Datum))
 
 
-# Setzen aller NA Werte auf 0, bis auf Wetterangaben
-gesamte_daten$feiertag[is.na(gesamte_daten$feiertag)] <- 0
-gesamte_daten$KielerWoche[is.na(gesamte_daten$KielerWoche)] <- 0
-gesamte_daten$holstein_spiel[is.na(gesamte_daten$holstein_spiel)] <- 0
-gesamte_daten$thw_spiel[is.na(gesamte_daten$thw_spiel)] <- 0
-gesamte_daten$ferien[is.na(gesamte_daten$ferien)] <- 0
-gesamte_daten$flohmarkt[is.na(gesamte_daten$flohmarkt)] <- 0
-gesamte_daten$Umsatz[is.na(gesamte_daten$Umsatz)] <- 0
-gesamte_daten$jahreszeit[is.na(gesamte_daten$jahreszeit)] <- 0
-gesamte_daten$Bewoelkung[is.na(gesamte_daten$Bewoelkung)] <- 0
-gesamte_daten$sylvester[is.na(gesamte_daten$sylvester)] <- 0
-gesamte_daten$vor_sylvester[is.na(gesamte_daten$vor_sylvester)] <- 0
-gesamte_daten$tage_vor_ostern[is.na(gesamte_daten$tage_vor_ostern)] <- 0
-gesamte_daten$ostersamstag[is.na(gesamte_daten$ostersamstag)] <- 0
-gesamte_daten$wm_spiele[is.na(gesamte_daten$wm_spiele)] <- 0
-gesamte_daten$Count[is.na(gesamte_daten$Count)] <- 0
-gesamte_daten$windjammerparade[is.na(gesamte_daten$windjammerparade)] <- 0
-gesamte_daten$heiligabend[is.na(gesamte_daten$heiligabend)] <- 0
+# Column names to set 0 if is NA
+columns_to_set_zero <- c(
+  "feiertag", "KielerWoche", "holstein_spiel", "thw_spiel",
+  "ferien", "flohmarkt", "Umsatz", "jahreszeit",
+  "Bewoelkung", "sylvester", "vor_sylvester",
+  "tage_vor_ostern", "ostersamstag", "wm_spiele",
+  "Count", "windjammerparade", "heiligabend"
+)
+
+gesamte_daten <- set_na_to_zero(gesamte_daten, columns_to_set_zero)
+
+# # Setzen aller NA Werte auf 0, bis auf Wetterangaben
+# gesamte_daten$feiertag[is.na(gesamte_daten$feiertag)] <- 0
+# gesamte_daten$KielerWoche[is.na(gesamte_daten$KielerWoche)] <- 0
+# gesamte_daten$holstein_spiel[is.na(gesamte_daten$holstein_spiel)] <- 0
+# gesamte_daten$thw_spiel[is.na(gesamte_daten$thw_spiel)] <- 0
+# gesamte_daten$ferien[is.na(gesamte_daten$ferien)] <- 0
+# gesamte_daten$flohmarkt[is.na(gesamte_daten$flohmarkt)] <- 0
+# gesamte_daten$Umsatz[is.na(gesamte_daten$Umsatz)] <- 0
+# gesamte_daten$jahreszeit[is.na(gesamte_daten$jahreszeit)] <- 0
+# gesamte_daten$Bewoelkung[is.na(gesamte_daten$Bewoelkung)] <- 0
+# gesamte_daten$sylvester[is.na(gesamte_daten$sylvester)] <- 0
+# gesamte_daten$vor_sylvester[is.na(gesamte_daten$vor_sylvester)] <- 0
+# gesamte_daten$tage_vor_ostern[is.na(gesamte_daten$tage_vor_ostern)] <- 0
+# gesamte_daten$ostersamstag[is.na(gesamte_daten$ostersamstag)] <- 0
+# gesamte_daten$wm_spiele[is.na(gesamte_daten$wm_spiele)] <- 0
+# gesamte_daten$Count[is.na(gesamte_daten$Count)] <- 0
+# gesamte_daten$windjammerparade[is.na(gesamte_daten$windjammerparade)] <- 0
+# gesamte_daten$heiligabend[is.na(gesamte_daten$heiligabend)] <- 0
 
 # Herausfiltern aller Werte ohne Umsatzdaten, bspw. wenn geschlossen wegen Feiertagen oder wegen fehlenden Daten im Jahr 2012 und 2019
 # gefilterte_daten <- gesamte_daten %>%
@@ -289,3 +336,20 @@ gesamte_daten$arbeitslosenquote_kategorie <- cut(gesamte_daten$arbeitslosenquote
 
 
 gefilterte_daten <- distinct(gesamte_daten)
+
+
+
+###################################################
+### Data Preparation ####
+
+# # Preparation of independent variables ('features') by dummy coding the categorical variables
+# features <- as_tibble(model.matrix(Umsatz ~ as.factor(wochentag) + as.factor(Warengruppe) + as.factor(monat) + as.factor(wetter_kategorie) + as.factor(arbeitslosenquote_kategorie) + as.factor(monatsabschnitt) + as.factor(Count), data = gefilterte_daten))
+# names(features)
+#
+# # Construction of prepared data set
+# prepared_data <- tibble(label=gefilterte_daten$Umsatz, features) %>%  # inclusion of the dependent variable ('label')
+#   filter(complete.cases(.)) # Handling of missing values (here: only keeping rows without missing values)
+
+
+
+
