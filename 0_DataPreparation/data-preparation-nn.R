@@ -139,8 +139,8 @@ wind_labels <- c("NO_WIND", "NORMAL", "WINDY")
 set_na_to_zero(weather_data, "WEATHER_CODE")
 
 # Definition of weather code thresholds to categorize weather codes
-weather_limits <- c(-Inf, 80, 99)
-weather_labels <- c("GOOD_WEATHER", "THUNDERSTORM")
+weather_limits <- c(-Inf, 0, 80, 99)
+weather_labels <- c("GOOD_WEATHER", "BAD_WEATHER", "THUNDERSTORM")
 
 #### Sales Data ####
 
@@ -209,7 +209,7 @@ colnames(holstein_kiel_data) <- holstein_kiel_column_names
 
 # Set all values equal to Heimspiel in the 'GAME' column to 1
 holstein_kiel_data <- holstein_kiel_data %>%
-  mutate(HK_GAME = ifelse(HK_GAME == "H", 1, 0)) %>%
+  mutate(HK_GAME = ifelse(HK_GAME == "Heimspiel", 1, 0)) %>%
   filter(HK_GAME == 1)
 
 holstein_kiel_data$DATE <- as.Date(holstein_kiel_data$DATE, format = "%Y-%m-%d")
@@ -280,7 +280,7 @@ population_data <- data.frame(
 )
 
 population_data <- population_data %>%
-  mutate(across(-YEAR, ~ . / mean(., na.rm = TRUE)))
+  mutate(across(-YEAR, ~./mean(., na.rm = TRUE)))
 
 # Define a vector with the new column names and use colnames to assign the new names to the data frame
 expenses_column_names <- c("YEAR", "EXPENSES_1P", "EXPENSES_2P", "EXPENSES_3P", "EXPENSES_4P", "EXPENSES_5P", "EXPENSES_AVG")
@@ -343,12 +343,6 @@ christmas_eve <- data.frame(
 
 christmas_eve$DATE <- as.Date(christmas_eve$DATE, format = "%Y-%m-%d")
 
-# Dataframe with seasonal bread
-seasonal_bred <- data.frame(
-  MONTH = c("November", "December"),
-  SEASONAL_BRED = c(1,1)
-)
-
 # Erstellung eines tibbles mit allen Datensätzen aufgrundlage der gemeinsamen Spalte 'Datum'
 complete_data <- full_join(weather_data, sales_data, by = c("DATE"))
 
@@ -378,17 +372,15 @@ complete_data <- complete_data %>%
   full_join(inflation_data, join_by(YEAR, MONTH)) %>%
   full_join(income_data, join_by(YEAR, QUARTER)) %>%
   full_join(population_data, join_by(YEAR)) %>%
-  full_join(expenses_data, join_by(YEAR)) %>%
-  full_join(seasonal_bred, join_by(MONTH))
+  full_join(expenses_data, join_by(YEAR))
 
 # Column names to set 0 if is NA
 columns_to_set_zero <- c(
-  "HOLIDAY", "KIEL_WEEK", "HK_GAME", "TK_GAME",
+  "REVENUE", "PRODUCT_GROUP", "HOLIDAY", "KIEL_WEEK", "HK_GAME", "TK_GAME",
   "VACATION", "OPEN_SUNDAY",
   "CLOUDS", "NEW_YEARS_EVE", "BEFORE_NEW_YEARS",
   "BEFORE_EASTER", "EASTER_SATURDAY", "WC_GAME",
-  "CRUISE_SHIPS", "WINDJAMMERPARADE", "CHRISTMAS_EVE",
-  "SEASONAL_BRED"
+  "CRUISE_SHIPS", "WINDJAMMERPARADE", "CHRISTMAS_EVE"
 )
 
 complete_data <- set_na_to_zero(complete_data, columns_to_set_zero)
@@ -451,9 +443,13 @@ complete_data$UNEMPLOYMENT_CATEGORY <- cut(complete_data$UNEMPLOYMENT_RATE,
                                                  labels = unemployment_labels,
                                                  include.lowest = TRUE)
 
-# complete_data <- filter(complete_data, !is.na(REVENUE) & (HOLIDAY == 0 | HOLIDAY == 1))
+complete_data <- filter(complete_data, !is.na(REVENUE) & (HOLIDAY == 0 | HOLIDAY == 1))
 
 filtered_data <- distinct(complete_data, .keep_all = TRUE)
+
+write.csv(filtered_data, "6_Files/filtered_data.csv", row.names = FALSE)
+
+'''
 
 # # Preparation of the data for neural network with one hot encoding
 # variables_to_encode <- c("SEASON", "WEEKDAY", "MONTH_PERIOD", "MONTH", "TEMPERATURE_CATEGORY", "WIND_CATEGORY", "WEATHER_CATEGORY", "UNEMPLOYMENT_CATEGORY")
@@ -461,30 +457,33 @@ filtered_data <- distinct(complete_data, .keep_all = TRUE)
 # year_data <- model.matrix(~ factor(YEAR) - 1, data = filtered_data)
 # encoded_data <- cbind(encoded_data, year_data)
 
-# # Divide the dataset into a prediction dataset and a validation dataset depending on the Datum variable
-# revenue_prediction_training_data <- filtered_data %>%
-#   filter(DATE >= "2013-07-01" & DATE <= "2017-07-31")
-#
-# revenue_prediction_validation_data <- filtered_data %>%
-#   filter(DATE >= "2017-08-01" & DATE <= "2018-07-31")
-#
-# revenue_prediction_test_data <- filtered_data %>%
-#   filter(DATE >= "2018-08-01" & DATE <= "2019-07-30")
-#
-#
+# Divide the dataset into a prediction dataset and a validation dataset depending on the Datum variable
+revenue_prediction_training_data <- filtered_data %>%
+  filter(DATE >= "2013-07-01" & DATE <= "2017-07-31")
+
+revenue_prediction_validation_data <- filtered_data %>%
+  filter(DATE >= "2017-08-01" & DATE <= "2018-07-31")
+
+revenue_prediction_test_data <- filtered_data %>%
+  filter(DATE >= "2018-08-01" & DATE <= "2019-07-30")
+
+
+model = REVENUE ~ as.factor(PRODUCT_GROUP) + as.factor(WEEKDAY) + as.factor(MONTH) + as.factor(NEW_YEARS_EVE)
+
 # model = REVENUE ~ as.factor(PRODUCT_GROUP) + as.factor(WEEKDAY) + as.factor(MONTH) + as.factor(VACATION) + as.factor(HOLIDAY) + as.factor(NEW_YEARS_EVE) + as.factor(BEFORE_NEW_YEARS) + as.factor(EASTER_SATURDAY) + as.factor(BEFORE_EASTER) + as.factor(CHRISTMAS_EVE) + as.factor(KIEL_WEEK) + as.factor(WINDJAMMERPARADE) + as.factor(TK_GAME) + as.factor(HK_GAME) + CRUISE_SHIPS + CLOUDS + TEMPERATURE + as.factor(WEATHER_CATEGORY) + INDEX_MONTH + log(RETAIL) + as.factor(OPEN_SUNDAY) + INCOME_REAL_YEAR + I(INDEX_YEAR) + as.factor(UNEMPLOYMENT_CATEGORY)
-#
-# revenue_prediction_training_data_features <- as_tibble(model.matrix(model, data = revenue_prediction_training_data))
-#
-# revenue_prediction_training_data_label <- tibble(label=revenue_prediction_training_data$REVENUE, revenue_prediction_training_data_features) %>%
-#   filter(complete.cases(.))
-#
-# revenue_prediction_validation_data_features <- as_tibble(model.matrix(model, data = revenue_prediction_validation_data))
-#
-# revenue_prediction_validation_data_label <- tibble(label=revenue_prediction_validation_data$REVENUE, revenue_prediction_validation_data_features) %>%
-#   filter(complete.cases(.))
-#
-# revenue_prediction_test_data_features <- as_tibble(model.matrix(REVENUE ~ as.factor(PRODUCT_GROUP) + as.factor(WEEKDAY) + as.factor(MONTH) + as.factor(VACATION) + as.factor(HOLIDAY) + as.factor(NEW_YEARS_EVE) + as.factor(BEFORE_NEW_YEARS) + as.factor(EASTER_SATURDAY) + as.factor(BEFORE_EASTER) + as.factor(CHRISTMAS_EVE) + as.factor(KIEL_WEEK) + as.factor(WINDJAMMERPARADE) + as.factor(TK_GAME) + as.factor(HK_GAME) + CRUISE_SHIPS + CLOUDS + TEMPERATURE + as.factor(WEATHER_CATEGORY) + INDEX_MONTH + log(RETAIL) + as.factor(OPEN_SUNDAY) + INCOME_REAL_YEAR + I(INDEX_YEAR) + as.factor(UNEMPLOYMENT_CATEGORY) + ID, data = revenue_prediction_test_data))
+revenue_prediction_training_data_features <- as_tibble(model.matrix(model, data = revenue_prediction_training_data))
+
+revenue_prediction_training_data_label <- tibble(label=revenue_prediction_training_data$REVENUE, revenue_prediction_training_data_features) %>%
+  filter(complete.cases(.))
+
+revenue_prediction_validation_data_features <- as_tibble(model.matrix(model, data = revenue_prediction_validation_data))
+
+revenue_prediction_validation_data_label <- tibble(label=revenue_prediction_validation_data$REVENUE, revenue_prediction_validation_data_features) %>%
+  filter(complete.cases(.))
+
+model_test <- update(model, ~ . + ID)
+
+revenue_prediction_test_data_features <- as_tibble(model.matrix(model_test, data = revenue_prediction_test_data))
 
 # # # Divide the dataset into a prediction dataset and a validation dataset depending on the Datum variable
 # # revenue_prediction_training_data_features <- encoded_data %>%
@@ -514,19 +513,19 @@ filtered_data <- distinct(complete_data, .keep_all = TRUE)
 # #   filter(DATE >= "2018-08-01" & DATE <= "2019-07-30") %>%
 # #   select(REVENUE)
 #
-# cat("Training features dimensions:", dim(revenue_prediction_training_data_features), "\n")
-# cat("Validation features dimensions:", dim(revenue_prediction_validation_data_features), "\n")
-# cat("Test features dimensions:", dim(revenue_prediction_test_data_features), "\n")
-# cat("\n")
-# cat("Training labels dimensions:", dim(revenue_prediction_training_data_label), "\n")
-# cat("Validation labels dimensions:", dim(revenue_prediction_validation_data_label), "\n")
-#
-# write.csv(revenue_prediction_training_data_features, "6_Files/revenue_prediction_training_data_features_2.csv", row.names = FALSE)
-# write.csv(revenue_prediction_validation_data_features, "6_Files/revenue_prediction_validation_data_features_2.csv", row.names = FALSE)
-# write.csv(revenue_prediction_test_data_features, "6_Files/revenue_prediction_test_data_features_2.csv", row.names = FALSE)
-#
-# write.csv(revenue_prediction_training_data_label, "6_Files/revenue_prediction_training_data_label_2.csv", row.names = FALSE)
-# write.csv(revenue_prediction_validation_data_label, "6_Files/revenue_prediction_validation_data_label_2.csv", row.names = FALSE)
+cat("Training features dimensions:", dim(revenue_prediction_training_data_features), "\n")
+cat("Validation features dimensions:", dim(revenue_prediction_validation_data_features), "\n")
+cat("Test features dimensions:", dim(revenue_prediction_test_data_features), "\n")
+cat("\n")
+cat("Training labels dimensions:", dim(revenue_prediction_training_data_label), "\n")
+cat("Validation labels dimensions:", dim(revenue_prediction_validation_data_label), "\n")
+
+write.csv(revenue_prediction_training_data_features, "6_Files/revenue_prediction_training_data_features_2.csv", row.names = FALSE)
+write.csv(revenue_prediction_validation_data_features, "6_Files/revenue_prediction_validation_data_features_2.csv", row.names = FALSE)
+write.csv(revenue_prediction_test_data_features, "6_Files/revenue_prediction_test_data_features_2.csv", row.names = FALSE)
+
+write.csv(revenue_prediction_training_data_label, "6_Files/revenue_prediction_training_data_label_2.csv", row.names = FALSE)
+write.csv(revenue_prediction_validation_data_label, "6_Files/revenue_prediction_validation_data_label_2.csv", row.names = FALSE)
 
 # # season_data <- one_hot_encode(filtered_data, "SEASON")
 # # weekday_data <- one_hot_encode(filtered_data, "WEEKDAY")
@@ -547,3 +546,4 @@ filtered_data <- distinct(complete_data, .keep_all = TRUE)
 # # complete_data <- complete_data %>%
 # #   cbind(season_data) #%>%
 # # #  select(-SEASON)
+'''

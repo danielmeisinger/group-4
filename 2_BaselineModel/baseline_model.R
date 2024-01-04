@@ -1,4 +1,4 @@
-# Need to execute dataset.R from 0_DataPreparation to get variable 'filtered_data'
+# Need to execute data-preparation.R from 0_DataPreparation to get variable 'filtered_data'
 
 source("0_DataPreparation/data_preparation.R")
 
@@ -33,21 +33,21 @@ lm_revenue_prediction_training_data <- lm(REVENUE ~ as.factor(WEEKDAY) * as.fact
                                             log(RETAIL) * I(INDEX_YEAR) * as.factor(PRODUCT_GROUP) +
                                             as.factor(MONTH_PERIOD) * as.factor(PRODUCT_GROUP) * INDEX_MONTH +
                                             as.factor(CRUISE_SHIPS) +
+                                            as.logical(SEASONAL_BRED) * as.factor(PRODUCT_GROUP) +
                                             CRUISE_SHIPS * as.factor(PRODUCT_GROUP) * as.factor(WEEKDAY) +
-                                            POPULATION + log(EXPENSES_AVG) +
-                                            as.logical(HK_GAME) * TEMPERATURE * as.factor(PRODUCT_GROUP) +
+                                            POPULATION +
+                                            log(EXPENSES_AVG) +
+                                            as.logical(HK_GAME) * I(TEMPERATURE) * as.factor(PRODUCT_GROUP) +
                                             TEMPERATURE * WEATHER_CODE * as.factor(PRODUCT_GROUP) +
                                             CLOUDS +
-                                            as.factor(WEATHER_CATEGORY),
+                                            as.factor(WEATHER_CATEGORY) +
+                                            as.logical(HK_GAME) * TEMPERATURE * CLOUDS * as.factor(PRODUCT_GROUP),
                                           data = revenue_prediction_training_data, weights = weights)
-
-
-# as.logical(HK_GAME) * TEMPERATURE * CLOUDS * as.factor(PRODUCT_GROUP) +
 
 # summary of the linear model
 # Assuming lm_revenue_prediction_training_data is your linear regression model
 model_summary <- summary(lm_revenue_prediction_training_data)
-print(model_summary$adj.r.squared)
+print(model_summary)
 
 
 # calculate the values for the predicted Umsatz using the validation dataset and compare with the real values using mean squared error
@@ -87,6 +87,14 @@ current_datetime <- format(Sys.time(), "%Y-%m-%d_%H-%M-%S")
 
 # Zusammenfügen der aktuellen Zeit mit dem Dateinamen
 file_name <- paste0(current_datetime, "_kaggle_submission.csv")
+
+validation_data <- revenue_prediction_validation_data %>%
+  select(DATE, REVENUE)
+
+val_file_name <- paste0(current_datetime, "_validation_data.csv")
+
+# csv Datei mit der aktuellen Zeit
+write.csv(validation_data, val_file_name, row.names = FALSE)
 
 # csv Datei mit der aktuellen Zeit
 write.csv(kaggle_submission_data, file_name, row.names = FALSE)
