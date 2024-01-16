@@ -1,3 +1,4 @@
+import os
 import pandas as pd
 import numpy as np
 from sklearn.preprocessing import StandardScaler, OneHotEncoder
@@ -8,17 +9,45 @@ from tensorflow.keras.layers import Dense, Dropout
 from tensorflow.keras.callbacks import ModelCheckpoint
 from tensorflow.keras.regularizers import l2
 
-# Load your data
-data_path = '/Users/daniel/Documents/10-projects/data-science-project/group-4/6_Files/filtered_data.csv'  # Replace with the actual path to your CSV file
+def mape(y_true, y_pred):
+    y_true, y_pred = np.array(y_true), np.array(y_pred)
+    non_zero_mask = y_true != 0
+    return np.mean(np.abs((y_true[non_zero_mask] - y_pred[non_zero_mask]) / y_true[non_zero_mask])) * 100
+
+
+# def zscore_normalize_columns(df, columns_to_normalize):
+#     for column in columns_to_normalize:
+#         # Calculate mean and standard deviation
+#         mean_val = df[column].mean()
+#         std_dev = df[column].std()
+        
+#         # Create a new column with normalized values
+#         new_column_name = f'{column}_normalized'
+#         df[new_column_name] = (df[column] - mean_val) / std_dev
+        
+#         # Drop the original column
+#         df.drop(column, axis=1, inplace=True)
+    
+#     return df
+
+# Get the current script's directory
+script_dir = os.path.dirname(os.path.abspath(__file__))
+
+# Construct the relative path to the data file
+data_path = os.path.join(script_dir, '../6_Files/filtered_data.csv')
 data = pd.read_csv(data_path)
 # Sort data by date
 data['DATE'] = pd.to_datetime(data['DATE'])
 data = data.sort_values(by='DATE')
 
+# columns_to_normalize = ['UNEMPLOYMENT_RATE','INDEX','CLOUDS','TEMPERATURE','WIND_SPEED','RETAIL','RETAIL_2','INCOME_REAL','INCOME_NOMINAL']
+
+# data = zscore_normalize_columns(df=data,columns_to_normalize=columns_to_normalize)
+
 # Define date ranges for training, validation, and test sets
 train_start_date = pd.to_datetime('2013-07-01')
-train_end_date = pd.to_datetime('2017-07-31')
-val_start_date = pd.to_datetime('2017-08-01')
+train_end_date = pd.to_datetime('2018-03-31')
+val_start_date = pd.to_datetime('2018-04-01')
 val_end_date = pd.to_datetime('2018-07-31')
 test_start_date = pd.to_datetime('2018-08-01')
 test_end_date = pd.to_datetime('2019-07-30')
@@ -90,17 +119,34 @@ checkpoint = tf.keras.callbacks.ModelCheckpoint(
 # ])
 
 # Build the neural network model
-model = Sequential([
-    Dense(64, activation='relu', input_shape=(X_train_preprocessed.shape[1],)),
-    Dropout(0.1),
-    Dense(128, activation='relu'),
-    Dropout(0.1),
-    Dense(128, activation='tanh',kernel_regularizer=l2(0.01)),
-    Dense(64, activation='relu',kernel_regularizer=l2(0.01)),
-    #Dense(48, activation='relu',kernel_regularizer=l2(0.01)),
-    Dropout(0.1),
-    Dense(1)
-])
+# model = Sequential([
+#     layers.InputLayer(input_shape=(X_train_preprocessed.shape[1],)),
+#     layers.BatchNormalization(),
+#     Dense(96, activation='relu'),
+#     Dropout(0.1),
+#     Dense(64, activation='relu'),
+#     Dense(96, activation='relu'),
+#     Dropout(0.1),
+#     Dense(128, activation='relu',kernel_regularizer=l2(0.01)),
+#     Dense(256, activation='relu',kernel_regularizer=l2(0.025)),
+#     Dropout(0.1),
+#     Dense(128, activation='relu',kernel_regularizer=l2(0.01)),
+#     Dense(96, activation='relu'),
+#     Dropout(0.1),
+#     Dense(1)
+# ])
+
+# model = Sequential([
+#     Dense(32, activation='relu', input_shape=(X_train_preprocessed.shape[1],)),
+#     Dropout(0.05),
+#     Dense(48, activation='relu'),
+#     Dense(16, activation='relu'),
+#     Dropout(0.1),
+#     Dense(32, activation='relu'),
+#     Dropout(0.1),
+#     Dense(1)
+# ])
+
 
 # model = keras.Sequential([
 #     layers.Dense(128, activation='relu', input_shape=(X_train_preprocessed.shape[1],)),
@@ -116,15 +162,16 @@ model = Sequential([
 #     layers.Dense(1)
 # ])
 
-# model = keras.Sequential([
-#     layers.InputLayer(input_shape=(X_train_preprocessed.shape[1],)),
-#     layers.Dense(12, activation='relu'),
-#     layers.Dropout(0.2),
-#     layers.Dense(4, activation='relu'),
-#     layers.Dense(1)
-# ])
+model = Sequential([
+    layers.InputLayer(input_shape=(X_train_preprocessed.shape[1],)),
+    layers.BatchNormalization(),
+    layers.Dense(20, activation='relu'),
+    layers.Dense(4, activation='relu'),
+    layers.Dense(16, activation='relu'),
+    layers.Dense(1)
+])
 
-custom_optimizer = optimizers.legacy.Adam(learning_rate=0.00075)  # Adjust the learning rate as needed
+custom_optimizer = optimizers.legacy.Adam(learning_rate=0.001)  # Adjust the learning rate as needed
 model.compile(optimizer=custom_optimizer, loss='mse')
 
 # Create EarlyStopping callback
@@ -134,7 +181,7 @@ model.compile(optimizer=custom_optimizer, loss='mse')
 history = model.fit(
     X_train_preprocessed, y_train,
     epochs=200,
-    batch_size=48,
+    batch_size=32,
     validation_data=(X_val_preprocessed, y_val),
     callbacks=[checkpoint]
 )
@@ -144,13 +191,26 @@ best_model = tf.keras.models.load_model(checkpoint_path)
 
 # Make predictions on the test set
 test_predictions = best_model.predict(X_test_preprocessed)
+test_predictions_model = model.predict(X_test_preprocessed)
 
 # Combine predictions with the ID column
 predictions_df = pd.DataFrame({
-    'ID': test_data['ID'],
-    'Predicted_REVENUE': test_predictions.flatten()
+    'id': test_data['ID'],
+    'Umsatz': test_predictions.flatten()
 })
 
-print(predictions_df)
+# Remove entries with empty 'id'
+predictions_df = predictions_df[predictions_df['id'].notna()]
 
-predictions_df.to_csv('/Users/daniel/Documents/10-projects/data-science-project/group-4/6_Files/kaggle_submission_61.csv')
+predictions_df_model = pd.DataFrame({
+    'id': test_data['ID'],
+    'Umsatz': test_predictions_model.flatten()
+})
+
+# Remove entries with empty 'id'
+predictions_df_model = predictions_df_model[predictions_df_model['id'].notna()]
+
+predictions_path = os.path.join(script_dir, '../6_Files/kaggle_submission_25.csv')
+
+predictions_df.to_csv(predictions_path, index=False)
+predictions_df_model.to_csv('/Users/daniel/Documents/10-projects/data-science-project/group-4/6_Files/kaggle_submission_25_model.csv', index=False)
