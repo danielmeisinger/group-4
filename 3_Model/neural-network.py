@@ -14,7 +14,6 @@ def mape(y_true, y_pred):
     non_zero_mask = y_true != 0
     return np.mean(np.abs((y_true[non_zero_mask] - y_pred[non_zero_mask]) / y_true[non_zero_mask])) * 100
 
-
 # def zscore_normalize_columns(df, columns_to_normalize):
 #     for column in columns_to_normalize:
 #         # Calculate mean and standard deviation

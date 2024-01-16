@@ -51,6 +51,13 @@ print(model_summary)
 
 
 # calculate the values for the predicted Umsatz using the validation dataset and compare with the real values using mean squared error
+revenue_prediction_training_data$REVENUE_PREDICTION <- predict(lm_revenue_prediction_training_data, revenue_prediction_training_data)
+mse_train <- mean((revenue_prediction_training_data$REVENUE - revenue_prediction_training_data$REVENUE_PREDICTION)^2, na.rm = TRUE)
+print(mse_train)
+
+mape_train <- mean(abs((revenue_prediction_training_data$REVENUE - revenue_prediction_training_data$REVENUE_PREDICTION)) / revenue_prediction_training_data$REVENUE, na.rm = TRUE)
+print(mape_train)
+
 revenue_prediction_validation_data$REVENUE_PREDICTION <- predict(lm_revenue_prediction_training_data, revenue_prediction_validation_data)
 mse <- mean((revenue_prediction_validation_data$REVENUE - revenue_prediction_validation_data$REVENUE_PREDICTION)^2, na.rm = TRUE)
 print(mse)
