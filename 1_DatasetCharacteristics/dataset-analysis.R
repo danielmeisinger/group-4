@@ -2,6 +2,9 @@
 
 source("0_DataPreparation/data_preparation.R")
 
+###################
+## Analysis of the effect of New Year's eve on the mean revenue per product group
+
 # Filter out rows with missing values in REVENUE
 filtered_data <- filtered_data %>%
   filter(!is.na(REVENUE))
@@ -43,7 +46,8 @@ plot_mean_revenue <- ggplot(mean_revenue, aes(x = factor(NEW_YEARS_EVE), y = mea
 # Display the plot
 print(plot_mean_revenue)
 
-
+###################
+## Analysis of the effect of New Year's eve on the mean revenue
 
 # Filter out rows with missing values in REVENUE
 filtered_data <- filtered_data %>%
@@ -87,6 +91,8 @@ plot_mean_revenue <- ggplot(mean_revenue, aes(x = factor(NEW_YEARS_EVE), y = mea
 # Display the plot
 print(plot_mean_revenue)
 
+###################
+## Analysis of number of cruise ships on the mean revenue
 
 # Filter out rows with missing values in REVENUE
 filtered_data <- filtered_data %>%
@@ -130,6 +136,8 @@ plot_mean_revenue <- ggplot(mean_revenue, aes(x = factor(CRUISE_SHIPS), y = mean
 # Display the plot
 print(plot_mean_revenue)
 
+###################
+## Analysis of the effect of occurence of a KSV game on the mean revenue per product group
 
 # Filter out rows with missing values in REVENUE
 filtered_data <- filtered_data %>%
@@ -173,11 +181,8 @@ plot_mean_revenue <- ggplot(mean_revenue, aes(x = factor(HK_GAME), y = mean_reve
 # Display the plot
 print(plot_mean_revenue)
 
-
-
-
-
-
+###################
+## Analysis of the effect of occurence of a HK game on the mean revenue per product group
 
 # Filter out rows with missing values in REVENUE
 filtered_data <- filtered_data %>%
@@ -220,6 +225,8 @@ plot_mean_revenue <- ggplot(mean_revenue, aes(x = factor(HK_GAME), y = mean_reve
 # Display the plot
 print(plot_mean_revenue)
 
+###################
+## Analysis of the relationship of retail prices and revenue
 
 filtered_data <- filtered_data %>%
   filter(PRODUCT_GROUP == 2)
@@ -235,10 +242,8 @@ plot_mean_revenue <- ggplot(filtered_data, aes(x = TEMPERATURE, y = REVENUE)) +
 # Display the plot
 print(plot_mean_revenue)
 
-
-
-
-
+###################
+## Analysis of the effect of the weather type on the mean revenue
 
 # Filter out rows with missing values in REVENUE
 filtered_data <- filtered_data %>%
@@ -282,8 +287,8 @@ plot_mean_revenue <- ggplot(mean_revenue, aes(x = factor(WEATHER_CATEGORY), y = 
 # Display the plot
 print(plot_mean_revenue)
 
-
-
+###################
+## Analysis of the effect of ??? on the mean revenue
 
 # Filter out rows with missing values in REVENUE
 filtered_data <- filtered_data %>%
@@ -327,8 +332,8 @@ plot_mean_revenue <- ggplot(mean_revenue, aes(x = factor(UNEMPLOYMENT_CATEGORY),
 # Display the plot
 print(plot_mean_revenue)
 
-
-
+###################
+## Analysis of the effect of the season on the mean revenue
 
 # Filter out rows with missing values in REVENUE
 filtered_data <- filtered_data %>%
