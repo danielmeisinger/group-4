@@ -21,15 +21,15 @@ Regression
 
 ### Results Summary
 
--   **Best Model:** [Name of the best-performing model]
+-   **Best Model:** 2024-01-19_0192-best_model.keras
 -   **Evaluation Metric:** MAPE
 -   **Result by Category** (Identifier):
-    -   **Bread** (1): [XX]%
-    -   **Rolls** (2): [XX]%
-    -   **Croissant** (3): [XX]%
-    -   **Confectionery** (4): [XX]%
-    -   **Cake** (5): [XX]%
-    -   **Seasonal Bread** (6): [XX]%
+    -   **Bread** (1): 18.87%
+    -   **Rolls** (2): 31.98%
+    -   **Croissant** (3): 22.13%
+    -   **Confectionery** (4): 22.52%
+    -   **Cake** (5): 30.74%
+    -   **Seasonal Bread** (6): 15.88%
 
 ## Documentation
 
