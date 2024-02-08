@@ -1,8 +1,8 @@
 # Data Preparation
 
-The data collected under "5_Data" is prepared for the analysis here. The first file "data_preparation.R" contains the preprocessing for the baseline model whereas the other file "data_preparation.R" prepares the data for analysis via an ML model.
+The data collected under "5_Data" is prepared for the analysis here. The first file "data_preparation.R" contains the preprocessing for the baseline model whereas the other file "data_preparation-nn.R" prepares the data for analysis via an ML model. The preprocessing of the data in "data_preparation-nn.R" is done via the same steps as in "data_preparation.R" with the exception of writing the resulting data frame in a csv file.
 
-The csv.files from the subdirectory "5_Data" are imported into data frames. The columns are then named informatively and the date variable of every data frame is converted into the YYYY-MM-DD format.
+The csv.files from the subdirectory "5_Data" are imported into data frames. The columns are then named informatively and the date variable of every data frame is converted into the YYYY-MM-DD format. In some cases index variables are created from data by replacing every string (and thereby discarding some information) in a variable by an integer of the value 1 (e.g. variable HOLIDAY in "holidays_data").
 
 * For the data on weather, contained in "weather_data",  Index variables to classify the weather based on temperatur (very low, low, moderate, high, very high, hot) and wind speed (no wind, normal, windy) as well as the presence of a thunderstorm are created. NA values of the weather code are set to zero.
 
@@ -22,4 +22,4 @@ The csv.files from the subdirectory "5_Data" are imported into data frames. The 
 
 * Data related to special holidays is contained in "new_years_eve", "before_new_years" (day before new years eve), "before_easter" (dates before easter), "easter_saturday" & "easter_sunday" and "christmas_eve". All these data frames index the dates of the corresponding holidays or derivated dates.
 
-All data frames are then joined into one comprehensive data frame. The NA values created by joining data frames containing every data of the observation period and data frame indexing only individual dates (e.g. special holidays) are set to zero. Entries refering to dates after the 2019-08-02 (resulting from the weather data) are excluded. Additionally, variables encoding the time of the month (start, mid, end) and the season are added.
+All data frames are then joined into one comprehensive data frame. The NA values created by joining data frames containing every data of the observation period and data frame indexing only individual dates (e.g. special holidays) are set to zero. Entries refering to dates after the 2019-08-02 (resulting from the weather data) are excluded. Additionally, variables encoding the time of the month (start, mid, end) and the season are added. In the last step a data frame "filtered_data" containing the preprocessed data is created (locally).
