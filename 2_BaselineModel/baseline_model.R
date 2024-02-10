@@ -65,6 +65,12 @@ print(mse)
 mape <- mean(abs((revenue_prediction_validation_data$REVENUE - revenue_prediction_validation_data$REVENUE_PREDICTION)) / revenue_prediction_validation_data$REVENUE, na.rm = TRUE)
 print(mape)
 
+revenue_prediction_validation_data$APE <- abs((revenue_prediction_validation_data$REVENUE - revenue_prediction_validation_data$REVENUE_PREDICTION)) / revenue_prediction_validation_data$REVENUE
+
+revenue_prediction_validation_data %>%
+  group_by(PRODUCT_GROUP) %>%
+  summarise(avg = mean(APE, na.rm = TRUE))
+
 # Find the row with the biggest difference
 revenue_prediction_validation_data <- revenue_prediction_validation_data %>%
   mutate(DIFFERENCE = abs(REVENUE - REVENUE_PREDICTION))
