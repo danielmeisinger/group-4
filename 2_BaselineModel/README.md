@@ -9,9 +9,9 @@ In terms of prediction accuracy the baseline model has a mape of 0.1676 on the t
 
 The prediction accuracy (measured in mape) of the baseline model in each product category is
 
--   **Bread** (1): [XX]%
--   **Rolls** (2): [XX]%
--   **Croissant** (3): [XX]%
--   **Confectionery** (4): [XX]%
--   **Cake** (5): [XX]%
--   **Seasonal Bread** (6): [XX]%
+-   **Bread** (1): 18.7%
+-   **Rolls** (2): 10.4%
+-   **Croissant** (3): 18.8%
+-   **Confectionery** (4): 26.5%
+-   **Cake** (5): 13.4%
+-   **Seasonal Bread** (6): 34.6%
