@@ -50,36 +50,42 @@ model_summary <- summary(lm_revenue_prediction_training_data)
 print(model_summary)
 
 
-# calculate the values for the predicted Umsatz using the validation dataset and compare with the real values using mean squared error
+# calculate the values for the predicted revenue using the validation dataset and compare with the real values using mean squared error
 revenue_prediction_training_data$REVENUE_PREDICTION <- predict(lm_revenue_prediction_training_data, revenue_prediction_training_data)
+
 mse_train <- mean((revenue_prediction_training_data$REVENUE - revenue_prediction_training_data$REVENUE_PREDICTION)^2, na.rm = TRUE)
 print(mse_train)
-
 mape_train <- mean(abs((revenue_prediction_training_data$REVENUE - revenue_prediction_training_data$REVENUE_PREDICTION)) / revenue_prediction_training_data$REVENUE, na.rm = TRUE)
 print(mape_train)
 
 revenue_prediction_validation_data$REVENUE_PREDICTION <- predict(lm_revenue_prediction_training_data, revenue_prediction_validation_data)
+
 mse <- mean((revenue_prediction_validation_data$REVENUE - revenue_prediction_validation_data$REVENUE_PREDICTION)^2, na.rm = TRUE)
 print(mse)
 mape <- mean(abs((revenue_prediction_validation_data$REVENUE - revenue_prediction_validation_data$REVENUE_PREDICTION)) / revenue_prediction_validation_data$REVENUE, na.rm = TRUE)
 print(mape)
 
+revenue_prediction_validation_data$APE <- abs((revenue_prediction_validation_data$REVENUE - revenue_prediction_validation_data$REVENUE_PREDICTION)) / revenue_prediction_validation_data$REVENUE
+
+revenue_prediction_validation_data %>%
+  group_by(PRODUCT_GROUP) %>%
+  summarise(avg = mean(APE, na.rm = TRUE))
+
+# Find the row with the biggest difference
 revenue_prediction_validation_data <- revenue_prediction_validation_data %>%
   mutate(DIFFERENCE = abs(REVENUE - REVENUE_PREDICTION))
 
-# Find the row with the biggest difference
 date_max_difference <- revenue_prediction_validation_data[which.max(revenue_prediction_validation_data$DIFFERENCE), ]
-
-# Print the date with the biggest difference
 print(date_max_difference$DATE)
 
+# calculate the predictions for the kaggle submission
 revenue_prediction_test_data$REVENUE_PREDICTION <- predict(lm_revenue_prediction_training_data, revenue_prediction_test_data)
 
 kaggle_submission_data <- revenue_prediction_test_data %>%
   select(ID, REVENUE_PREDICTION) %>%
   rename(REVENUE = REVENUE_PREDICTION)
 
-kaggle_submission_data <-  kaggle_submission_data[complete.cases(kaggle_submission_data$ID), ]
+kaggle_submission_data <- kaggle_submission_data[complete.cases(kaggle_submission_data$ID), ]
 
 kaggle_submission_data <- kaggle_submission_data %>%
   mutate_all(~ifelse(. < 0, 5, .)) %>%
@@ -89,10 +95,9 @@ kaggle_submission_data <- kaggle_submission_data %>%
 kaggle_submission_column_names <- c("id", "Umsatz")
 colnames(kaggle_submission_data) <- kaggle_submission_column_names
 
-# Current date and time
+# create a filename using the current date and time
 current_datetime <- format(Sys.time(), "%Y-%m-%d_%H-%M-%S")
 
-# Zusammenfügen der aktuellen Zeit mit dem Dateinamen
 file_name <- paste0(current_datetime, "_kaggle_submission.csv")
 
 validation_data <- revenue_prediction_validation_data %>%
@@ -100,8 +105,6 @@ validation_data <- revenue_prediction_validation_data %>%
 
 val_file_name <- paste0(current_datetime, "_validation_data.csv")
 
-# csv Datei mit der aktuellen Zeit
+# write the validations data and the kaggle data into sv files
 write.csv(validation_data, val_file_name, row.names = FALSE)
-
-# csv Datei mit der aktuellen Zeit
 write.csv(kaggle_submission_data, file_name, row.names = FALSE)
