@@ -149,6 +149,12 @@ sales_column_names <- c("DATE", "PRODUCT_GROUP", "REVENUE")
 colnames(sales_data) <- sales_column_names
 sales_data$DATE <- as.Date(sales_data$DATE, format = "%Y-%m-%d")
 
+# sales_data <- sales_data %>%
+#   group_by(PRODUCT_GROUP) %>%
+#   arrange(DATE) %>%
+#   mutate(REVENUE_7LAG = lag(REVENUE, 365))
+
+
 # Define a vector with the new column names and use colnames to assign the new names to the data frame
 test_id_column_names <- c("ID", "DATE", "PRODUCT_GROUP")
 colnames(test_id_data) <- test_id_column_names

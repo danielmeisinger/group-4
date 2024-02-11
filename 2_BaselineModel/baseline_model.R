@@ -64,6 +64,15 @@ print(mse)
 mape <- mean(abs((revenue_prediction_validation_data$REVENUE - revenue_prediction_validation_data$REVENUE_PREDICTION)) / revenue_prediction_validation_data$REVENUE, na.rm = TRUE)
 print(mape)
 
+
+val_mape <- validation_prediction %>%
+  group_by(PRODUCT_GROUP) %>%
+  mutate(mape = mean(abs(REVENUE - REVENUE_PREDICTION) / revenue_prediction_validation_data$REVENUE, na.rm = TRUE)) %>%
+  summarise(MAPE = mean(mape, na.rm = TRUE))
+
+total_mape <- validation_prediction %>%
+  summarise(Total_MAPE = mean(ifelse(REVENUE != 0, abs(REVENUE - REVENUE_PREDICTION) / REVENUE, 0), na.rm = TRUE))
+
 revenue_prediction_validation_data <- revenue_prediction_validation_data %>%
   mutate(DIFFERENCE = abs(REVENUE - REVENUE_PREDICTION))
 

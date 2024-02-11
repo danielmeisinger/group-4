@@ -149,6 +149,11 @@ sales_column_names <- c("DATE", "PRODUCT_GROUP", "REVENUE")
 colnames(sales_data) <- sales_column_names
 sales_data$DATE <- as.Date(sales_data$DATE, format = "%Y-%m-%d")
 
+# sales_data <- sales_data %>%
+#   group_by(PRODUCT_GROUP) %>%
+#   arrange(DATE) %>%
+#   mutate(REVENUE_7LAG = lag(REVENUE, 7, default = mean(REVENUE[1:7], na.rm = TRUE)))
+
 # Define a vector with the new column names and use colnames to assign the new names to the data frame
 test_id_column_names <- c("ID", "DATE", "PRODUCT_GROUP")
 colnames(test_id_data) <- test_id_column_names
@@ -409,7 +414,8 @@ complete_data <- complete_data %>%
   arrange(DATE) %>%
   filter(!is.na(DATE)) %>%
   filter(DATE < as.Date("2019-08-02")) %>%
-  mutate(across(c("CLOUDS", "TEMPERATURE", "WIND_SPEED", "WEATHER_CODE"), zoo::na.approx, na.rm = FALSE))
+  mutate(across(c("CLOUDS", "TEMPERATURE", "WIND_SPEED"), zoo::na.approx, na.rm = FALSE)) %>%
+  mutate(across(c("WEATHER_CODE"), zoo::na.locf, na.rm = FALSE))
 
 complete_data <- complete_data %>%
   mutate(MONTH_PERIOD = case_when(
